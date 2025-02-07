@@ -62,6 +62,8 @@ public class MovingCube : MonoBehaviour
         }
         float direction = hangover > 0 ? 1f : -1f;
 
+        float penalty = GetPenalty(hangover);
+
         switch (MoveDirection)
         {
             case MoveDirection.Z:
@@ -82,16 +84,8 @@ public class MovingCube : MonoBehaviour
 
     private static float GetPenalty(float hangover)
     {
-
-        switch (hangover)
-        {
-            case float h when h > 0.05f:
-                return 1f;
-            case float h when h < -0.05f:
-                return -1f;
-            default:
-                return 0f;
-        }
+        //Debug.Log(hangover);
+        return hangover;
     }
 
     private float GetHangover()
@@ -104,7 +98,8 @@ public class MovingCube : MonoBehaviour
 
     private void SplitCubeOnX(float hangover, float direction)
     {
-        if (hangover != 0f)
+        Debug.Log(hangover);
+        if (hangover >= 0.01 || hangover <= -0.05)
         {
             float newXSize = LastCube.transform.localScale.x - MathF.Abs(hangover);
             float fallingBlockSize = transform.localScale.x - newXSize;
@@ -125,7 +120,8 @@ public class MovingCube : MonoBehaviour
     }
     private void SplitCubeOnZ(float hangover, float direction)
     {
-        if (hangover != 0f)
+        Debug.Log(hangover);
+        if (hangover >= 0.015 || hangover <= -0.05)
         {
             float newZSize = LastCube.transform.localScale.z - MathF.Abs(hangover);
             float fallingBlockSize = transform.localScale.z - newZSize;
@@ -142,12 +138,16 @@ public class MovingCube : MonoBehaviour
         else
         {
             TouchDown(LastCube.transform.position);
-            Debug.Log("TouchDown");
         }
     }
     private void TouchDown(Vector3 lastCubePos)
     {
-        Vector3 newPos = new Vector3(lastCubePos.x, lastCubePos.y + LastCube.transform.localScale.y, lastCubePos.z);
+        Debug.Log("TouchDown");
+        Vector3 newPos;
+        if (!LastCube.isStartCube)
+            newPos = new Vector3(lastCubePos.x, lastCubePos.y + LastCube.transform.localScale.y, lastCubePos.z);
+        else
+            newPos = new Vector3(transform.position.x, transform.position.y, transform.position.z);
         transform.position = newPos;
     }
 
