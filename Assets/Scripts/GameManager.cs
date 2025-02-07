@@ -15,6 +15,7 @@ public class GameManager : MonoBehaviour
     public CubeSpawner[] cubeSpawners;
     private int spawnerIndex;
     private CubeSpawner currentSpawner;
+    public float moveSpeed = 1.5f;
 
     private void Awake()
     {
@@ -26,6 +27,7 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
+        Invoke(nameof(SpawnCube), 1f);
     }
     void Update()
     {
@@ -38,13 +40,14 @@ public class GameManager : MonoBehaviour
                 MovingCube.CurrentCube.Stop();
 
             }
-
-
-            spawnerIndex = spawnerIndex == 0 ? 1 : 0;
-            currentSpawner = cubeSpawners[spawnerIndex];
-
-            currentSpawner.SpawnCube();
         }
+    }
+    public void SpawnCube()
+    {
+        spawnerIndex = spawnerIndex == 0 ? 1 : 0;
+        currentSpawner = cubeSpawners[spawnerIndex];
+
+        currentSpawner.SpawnCube();
     }
     internal void Score()
     {

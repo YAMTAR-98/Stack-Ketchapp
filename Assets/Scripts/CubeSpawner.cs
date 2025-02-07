@@ -18,9 +18,12 @@ public class CubeSpawner : MonoBehaviour
 
             spawnedCube.transform.position = new Vector3(x, MovingCube.LastCube.transform.position.y + cubePrefab.transform.localScale.y, z);
         }
-
         else
+        {
             spawnedCube.transform.position = transform.position;
+            Debug.Log("asdasdasd");
+        }
+
 
         spawnedCube.MoveDirection = moveDirection;
     }

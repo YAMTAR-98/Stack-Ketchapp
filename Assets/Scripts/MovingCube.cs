@@ -14,13 +14,15 @@ public class MovingCube : MonoBehaviour
     [SerializeField] private float moveSpeed = 1f;
     [SerializeField] internal bool isStartCube;
 
+    private int toucdownCounter;
+
     private void Start()
     {
         if (moveSpeed > 0)
             CurrentCube = this;
         if (LastCube == null && isStartCube)
             LastCube = GameManager.Instance.baseCube;
-
+        moveSpeed = GameManager.Instance.moveSpeed;
         GetComponent<Renderer>().material.color = GetRandomColor();
 
         transform.localScale = new Vector3(LastCube.transform.localScale.x, transform.localScale.y, LastCube.transform.localScale.z);
@@ -34,6 +36,8 @@ public class MovingCube : MonoBehaviour
 
     void Update()
     {
+        if (isStartCube)
+            return;
         switch (MoveDirection)
         {
             case MoveDirection.Z:
@@ -98,7 +102,7 @@ public class MovingCube : MonoBehaviour
 
     private void SplitCubeOnX(float hangover, float direction)
     {
-        Debug.Log(hangover);
+        //Debug.Log(hangover);
         if (hangover >= 0.01 || hangover <= -0.05)
         {
             float newXSize = LastCube.transform.localScale.x - MathF.Abs(hangover);
@@ -120,7 +124,7 @@ public class MovingCube : MonoBehaviour
     }
     private void SplitCubeOnZ(float hangover, float direction)
     {
-        Debug.Log(hangover);
+        //Debug.Log(hangover);
         if (hangover >= 0.015 || hangover <= -0.05)
         {
             float newZSize = LastCube.transform.localScale.z - MathF.Abs(hangover);
@@ -142,13 +146,57 @@ public class MovingCube : MonoBehaviour
     }
     private void TouchDown(Vector3 lastCubePos)
     {
-        Debug.Log("TouchDown");
+        toucdownCounter = SoundManager.Instance.PlaySound();
+        GameManager.Instance.moveSpeed += 0.2f;
         Vector3 newPos;
         if (!LastCube.isStartCube)
             newPos = new Vector3(lastCubePos.x, lastCubePos.y + LastCube.transform.localScale.y, lastCubePos.z);
         else
             newPos = new Vector3(transform.position.x, transform.position.y, transform.position.z);
         transform.position = newPos;
+
+        if (toucdownCounter >= 1)
+        {
+            StartCoroutine(ScaleCoroutine());
+        }
+        else
+        {
+            LastCube = this;
+            GameManager.Instance.SpawnCube();
+        }
+    }
+    public float scalingDuration = 2f;
+    IEnumerator ScaleCoroutine()
+    {
+        Vector3 initialScale = transform.localScale;
+
+        // Hedef ölçek: x ve z, başlangıç değerlerinin 1.2 katı,
+        // ancak 1'den büyük olamaz.
+        float targetX = Mathf.Min(initialScale.x * 1.2f, 1f);
+        float targetZ = Mathf.Min(initialScale.z * 1.2f, 1f);
+        Vector3 targetScale = new Vector3(targetX, initialScale.y, targetZ);
+
+        float elapsed = 0f;
+
+        // Belirlenen süre boyunca ölçek geçişini gerçekleştir
+        while (elapsed < scalingDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / scalingDuration;
+
+            // Lerp ile x ve z eksenlerinde yumuşak geçiş sağlanır
+            float newX = Mathf.Lerp(initialScale.x, targetScale.x, t);
+            float newZ = Mathf.Lerp(initialScale.z, targetScale.z, t);
+            transform.localScale = new Vector3(newX, initialScale.y, newZ);
+
+            yield return null;
+        }
+
+        // Son durumda kesin hedef ölçeğe ulaşalım
+        transform.localScale = targetScale;
+
+        LastCube = this;
+        GameManager.Instance.SpawnCube();
     }
 
     private void SpawnDropCube(float fallingBlockZPosition, float fallingBlockSize)
@@ -166,6 +214,11 @@ public class MovingCube : MonoBehaviour
         }
         cube.AddComponent<Rigidbody>();
         cube.GetComponent<Renderer>().material.color = GetComponent<Renderer>().material.color;
+        SoundManager.Instance.ResetCounter();
+        SoundManager.Instance.PlayCutSound();
+        LastCube = this;
+        GameManager.Instance.moveSpeed = 1.5f;
+        GameManager.Instance.SpawnCube();
         Destroy(cube, 4f);
     }
 }
