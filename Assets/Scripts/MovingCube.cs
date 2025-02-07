@@ -10,6 +10,7 @@ public class MovingCube : MonoBehaviour
     public static MovingCube CurrentCube { get; private set; }
     public static MovingCube LastCube { get; internal set; }
     public MoveDirection MoveDirection { get; internal set; }
+    public float scalingDuration = 0.5f;
 
     [SerializeField] private float moveSpeed = 1f;
     [SerializeField] internal bool isStartCube;
@@ -165,7 +166,7 @@ public class MovingCube : MonoBehaviour
             GameManager.Instance.SpawnCube();
         }
     }
-    public float scalingDuration = 2f;
+
     IEnumerator ScaleCoroutine()
     {
         Vector3 initialScale = transform.localScale;
@@ -181,7 +182,7 @@ public class MovingCube : MonoBehaviour
         // Belirlenen süre boyunca ölçek geçişini gerçekleştir
         while (elapsed < scalingDuration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.deltaTime * 2f;
             float t = elapsed / scalingDuration;
 
             // Lerp ile x ve z eksenlerinde yumuşak geçiş sağlanır
