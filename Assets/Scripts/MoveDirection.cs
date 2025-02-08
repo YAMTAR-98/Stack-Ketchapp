@@ -1,5 +1,7 @@
 public enum MoveDirection
 {
     X,
-    Z
+    Z,
+    left,
+    back
 }
