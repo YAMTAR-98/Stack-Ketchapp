@@ -6,6 +6,7 @@ public class CubeSpawner : MonoBehaviour
 
     [SerializeField] private MoveDirection moveDirection;
     public bool isRunnerGame;
+    int spawnCount = 0;
     private void Start()
     {
         isRunnerGame = GameManager.Instance.isRunnerGame;
@@ -40,7 +41,7 @@ public class CubeSpawner : MonoBehaviour
                 float x = moveDirection == MoveDirection.X ? transform.position.x : MovingCube.LastCube.transform.position.x;
                 float z = moveDirection == MoveDirection.back ? transform.position.z : transform.position.z;
 
-                spawnedCube.transform.position = new Vector3(MovingCube.LastCube.transform.position.x - cubePrefab.transform.localScale.x, MovingCube.LastCube.transform.position.y, z);
+                spawnedCube.transform.position = new Vector3(MovingCube.LastCube.transform.position.x + cubePrefab.transform.localScale.x, MovingCube.LastCube.transform.position.y, z);
             }
             else
             {

@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     // Hedef platformun Transform'u. Inspector üzerinden veya SetTarget metodu ile atanabilir.
     public Transform targetPlatform;
+    public LevelManager levelManager;
 
     // Hareket ve dönme hızları
     public float moveSpeed = 2f;
@@ -21,6 +22,13 @@ public class PlayerController : MonoBehaviour
     {
         // Bu scriptin bağlı olduğu GameObject'deki Animator bileşenini alıyoruz.
         animator = GetComponent<Animator>();
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        Debug.Log("Succes");
+        levelManager.OpenOrCloseStartUI(true);
+        GameManager.Instance.FinisSession();
+
     }
 
     void Update()

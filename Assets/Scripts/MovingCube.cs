@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class MovingCube : MonoBehaviour
 {
-    public static MovingCube CurrentCube { get; private set; }
+    public static MovingCube CurrentCube { get; internal set; }
     public static MovingCube LastCube { get; internal set; }
     public MoveDirection MoveDirection { get; internal set; }
     public List<Material> materials = new List<Material>();
@@ -19,15 +19,23 @@ public class MovingCube : MonoBehaviour
 
     [SerializeField] private float moveSpeed = 1f;
     [SerializeField] internal bool isStartCube;
+    [SerializeField] internal bool lockObjectMovement;
 
     private int toucdownCounter;
+    private void Awake()
+    {
+        if (LastCube == null && isStartCube)
+        {
+            LastCube = this;
+        }
 
+    }
     private void Start()
     {
         if (moveSpeed > 0)
             CurrentCube = this;
-        if (LastCube == null && isStartCube)
-            LastCube = GameManager.Instance.baseCube;
+        //if (LastCube == null && isStartCube)
+        //    LastCube = GameManager.Instance.baseCube;
         moveSpeed = GameManager.Instance.moveSpeed;
         GetComponent<Renderer>().material.color = GetRandomColor();
 
@@ -42,7 +50,7 @@ public class MovingCube : MonoBehaviour
 
     void Update()
     {
-        if (isStartCube)
+        if (lockObjectMovement)
             return;
         switch (MoveDirection)
         {
@@ -66,6 +74,9 @@ public class MovingCube : MonoBehaviour
 
     internal void Stop()
     {
+        if (isStartCube || lockObjectMovement)
+            return;
+
         moveSpeed = 0;
         float hangover = GetHangover();
         float max = MoveDirection == MoveDirection.Z ? LastCube.transform.localScale.z : LastCube.transform.localScale.x;
@@ -73,7 +84,7 @@ public class MovingCube : MonoBehaviour
         {
             LastCube = null;
             CurrentCube = null;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            ResetScene();
             return;
         }
         float direction = hangover > 0 ? 1f : -1f;
@@ -100,6 +111,13 @@ public class MovingCube : MonoBehaviour
         if (!isStartCube)
             LastCube = this;
     }
+    void ResetScene()
+    {
+        if (isStartCube || lockObjectMovement)
+            return;
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
 
     private static float GetPenalty(float hangover)
     {
@@ -119,10 +137,19 @@ public class MovingCube : MonoBehaviour
 
     private void SplitCubeOnX(float hangover, float direction)
     {
+        if (isStartCube || lockObjectMovement)
+            return;
+
         //Debug.Log(hangover);
         if (hangover >= maxHangover || hangover <= minHangover)
         {
             float newXSize = LastCube.transform.localScale.x - MathF.Abs(hangover);
+            if (newXSize <= 0.1f)
+            {
+                Debug.Log("GameOver");
+                ResetScene();
+                return;
+            }
             float fallingBlockSize = transform.localScale.x - newXSize;
 
             float newXPosition = LastCube.transform.position.x + (hangover / 2);
@@ -141,10 +168,19 @@ public class MovingCube : MonoBehaviour
     }
     private void SplitCubeOnZ(float hangover, float direction)
     {
-        //Debug.Log(hangover);
+        if (isStartCube || lockObjectMovement)
+            return;
+
+        Debug.Log(hangover);
         if (hangover >= maxHangover || hangover <= minHangover)
         {
             float newZSize = LastCube.transform.localScale.z - MathF.Abs(hangover);
+            if (newZSize <= 0.1f)
+            {
+                Debug.Log("GameOver");
+                ResetScene();
+                return;
+            }
             float fallingBlockSize = transform.localScale.z - newZSize;
 
             float newZPosition = LastCube.transform.position.z + (hangover / 2);
@@ -162,6 +198,50 @@ public class MovingCube : MonoBehaviour
         }
     }
     private void SplitCubeOnBack(float hangover, float direction)
+    {
+        if (isStartCube || lockObjectMovement)
+            return;
+
+        Debug.Log(hangover);
+        // Eğer sapma (hangover) eşik değerlerin dışında ise küpü böl
+        if (hangover >= maxHangover || hangover <= minHangover)
+        {
+            // Yeni z boyutunu, son küpün ölçeğinden sapmanın mutlak değeri kadar azaltıyoruz.
+            float newZSize = LastCube.transform.localScale.z - MathF.Abs(hangover);
+            if (newZSize <= 0.1f)
+            {
+                Debug.Log("<GameOver>");
+                ResetScene();
+                return;
+            }
+            float fallingBlockSize = transform.localScale.z - newZSize;
+
+            float newZPosition;
+
+            if (hangover < 0)
+                newZPosition = LastCube.transform.position.z - (hangover / 2);
+            else
+                newZPosition = LastCube.transform.position.z + (hangover / 2);
+            transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, newZSize);
+            transform.position = new Vector3(transform.position.x, transform.position.y, newZPosition);
+
+            float directionChaneValue;
+            if (hangover < 0)
+                directionChaneValue = 1f;
+            else
+                directionChaneValue = -1f;
+            float cubeEdge = transform.position.z - (newZSize / 2f * direction * directionChaneValue);
+            float fallingBlockZPosition = cubeEdge - (fallingBlockSize / 2f * direction);
+
+            SpawnDropCube(fallingBlockZPosition, fallingBlockSize);
+        }
+        else
+        {
+            // Sapma çok küçükse direkt TouchDown işlemini gerçekleştir.
+            TouchDown(LastCube.transform.position);
+        }
+    }
+    /*private void SplitCubeOnBack(float hangover, float direction)
     {
         Debug.Log(hangover);
         if (hangover >= maxHangover || hangover <= minHangover)
@@ -182,21 +262,23 @@ public class MovingCube : MonoBehaviour
         {
             TouchDown(LastCube.transform.position);
         }
-    }
+    }*/
     private void TouchDown(Vector3 lastCubePos)
     {
+        if (isStartCube || lockObjectMovement)
+            return;
+
         toucdownCounter = SoundManager.Instance.PlaySound();
         GameManager.Instance.moveSpeed += 0.2f;
         Vector3 newPos;
         if (!LastCube.isStartCube)
         {
             if (MoveDirection == MoveDirection.back && GameManager.Instance.isRunnerGame)
-                newPos = new Vector3(lastCubePos.x - LastCube.transform.localScale.x, lastCubePos.y, lastCubePos.z);
+                newPos = new Vector3(lastCubePos.x + LastCube.transform.localScale.x, lastCubePos.y, lastCubePos.z);
             else if (MoveDirection == MoveDirection.Z && GameManager.Instance.isRunnerGame)
-                newPos = new Vector3(lastCubePos.x - LastCube.transform.localScale.x, lastCubePos.y, lastCubePos.z);
+                newPos = new Vector3(lastCubePos.x + LastCube.transform.localScale.x, lastCubePos.y, lastCubePos.z);
             else
                 newPos = new Vector3(lastCubePos.x, lastCubePos.y + LastCube.transform.localScale.y, lastCubePos.z);
-
         }
         else
         {
@@ -204,7 +286,7 @@ public class MovingCube : MonoBehaviour
         }
         transform.position = newPos;
 
-        if (toucdownCounter >= 8)
+        if (toucdownCounter >= GameManager.Instance.scaleCount)
         {
             StartCoroutine(ScaleCoroutine());
         }
@@ -250,6 +332,9 @@ public class MovingCube : MonoBehaviour
 
     private void SpawnDropCube(float fallingBlockZPosition, float fallingBlockSize)
     {
+        if (isStartCube || lockObjectMovement)
+            return;
+
         GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
         if (MoveDirection == MoveDirection.Z)
         {
