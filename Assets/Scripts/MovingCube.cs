@@ -1,10 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 public class MovingCube : MonoBehaviour
 {
@@ -13,7 +11,6 @@ public class MovingCube : MonoBehaviour
     public MoveDirection MoveDirection { get; internal set; }
     public List<Material> materials = new List<Material>();
     public float scalingDuration = 0.5f;
-
     public float minHangover = -0.015f;
     public float maxHangover = 0.015f;
 
@@ -21,37 +18,51 @@ public class MovingCube : MonoBehaviour
     [SerializeField] internal bool isStartCube;
     [SerializeField] internal bool lockObjectMovement;
 
-    private int toucdownCounter;
+    private const float MIN_SIZE_THRESHOLD = 0.01f;
+    private const float DEFAULT_MOVE_SPEED = 1.5f;
+    private const float SCALE_MULTIPLIER = 1.2f;
+    private int touchdownCounter;
+    private Renderer cubeRenderer;
+
     private void Awake()
     {
+        cubeRenderer = GetComponent<Renderer>();
         if (LastCube == null && isStartCube)
         {
             LastCube = this;
         }
-
     }
+
     private void Start()
     {
         if (moveSpeed > 0)
             CurrentCube = this;
-        //if (LastCube == null && isStartCube)
-        //    LastCube = GameManager.Instance.baseCube;
-        moveSpeed = GameManager.Instance.moveSpeed;
-        GetComponent<Renderer>().material.color = GetRandomColor();
 
-        transform.localScale = new Vector3(LastCube.transform.localScale.x, transform.localScale.y, LastCube.transform.localScale.z);
+        if (GameManager.Instance != null)
+            moveSpeed = GameManager.Instance.moveSpeed;
+
+        if (!isStartCube && !lockObjectMovement)
+            cubeRenderer.material.color = GetRandomColor();
+
+        if (LastCube != null && !isStartCube && !lockObjectMovement)
+        {
+            // Adjust to match the last cube's x and z scale
+            Debug.Log(gameObject.name);
+            transform.localScale = new Vector3(LastCube.transform.localScale.x, transform.localScale.y, LastCube.transform.localScale.z);
+        }
     }
 
     private Color GetRandomColor()
     {
-        return new Color(UnityEngine.Random.Range(0, 1f), UnityEngine.Random.Range(0, 1f), UnityEngine.Random.Range(0, 1f));
+        return new Color(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
     }
-
 
     void Update()
     {
         if (lockObjectMovement)
             return;
+
+        // Move according to the movement direction
         switch (MoveDirection)
         {
             case MoveDirection.Z:
@@ -69,7 +80,6 @@ public class MovingCube : MonoBehaviour
             default:
                 break;
         }
-
     }
 
     internal void Stop()
@@ -79,25 +89,49 @@ public class MovingCube : MonoBehaviour
 
         moveSpeed = 0;
         float hangover = GetHangover();
-        float max = MoveDirection == MoveDirection.Z ? LastCube.transform.localScale.z : LastCube.transform.localScale.x;
-        if (MathF.Abs(hangover) >= max)
+        Debug.Log(hangover);
+        if (LastCube == null)
         {
-            LastCube = null;
-            CurrentCube = null;
+            Debug.LogError("LastCube is null!");
             ResetScene();
             return;
         }
+
+        // Target size is determined based on the axis of movement.
+        float maxSize = (MoveDirection == MoveDirection.Z || MoveDirection == MoveDirection.back)
+                            ? LastCube.transform.localScale.z
+                            : LastCube.transform.localScale.x;
+
+        // If the offset (hangover) is larger than the last cube's size (extremely misaligned placement)
+        if (MathF.Abs(hangover) >= maxSize)
+        {
+            Debug.Log("asasasasas");
+            Rigidbody rb = CurrentCube.gameObject.AddComponent<Rigidbody>();
+            rb.useGravity = true;
+            GameManager.Instance.playerController.SetTarget(GameManager.Instance.levelManager.finishLine.transform);
+            LastCube = null;
+            CurrentCube = null;
+            //ResetScene();
+            return;
+        }
+
+        // If the offset is within the defined threshold values (minHangover and maxHangover),
+        // call TouchDown instead of splitting.
+        if (hangover < maxHangover && hangover > minHangover)
+        {
+            TouchDown(LastCube.transform.position);
+            return;
+        }
+
         float direction = hangover > 0 ? 1f : -1f;
-
-        float penalty = GetPenalty(hangover);
-
+        // If the offset is outside the threshold, perform the splitting operations.
         switch (MoveDirection)
         {
             case MoveDirection.Z:
-                SplitCubeOnZ(hangover, direction);
+                SplitCubeOnAxis(hangover, direction, isXAxis: false);
                 break;
             case MoveDirection.X:
-                SplitCubeOnX(hangover, direction);
+                SplitCubeOnAxis(hangover, direction, isXAxis: true);
                 break;
             case MoveDirection.back:
                 SplitCubeOnBack(hangover, direction);
@@ -107,10 +141,10 @@ public class MovingCube : MonoBehaviour
         }
         GameManager.Instance.Score();
 
-
         if (!isStartCube)
             LastCube = this;
     }
+
     void ResetScene()
     {
         if (isStartCube || lockObjectMovement)
@@ -121,242 +155,190 @@ public class MovingCube : MonoBehaviour
 
     private static float GetPenalty(float hangover)
     {
-        //Debug.Log(hangover);
         return hangover;
     }
 
     private float GetHangover()
     {
+        if (LastCube == null)
+        {
+            Debug.LogError("LastCube is null in GetHangover");
+            return 0f;
+        }
         if (MoveDirection == MoveDirection.Z)
             return transform.position.z - LastCube.transform.position.z;
         if (MoveDirection == MoveDirection.back)
-            return -transform.position.z - LastCube.transform.position.z;
+            return LastCube.transform.position.z - transform.position.z;
         else
             return transform.position.x - LastCube.transform.position.x;
     }
 
-    private void SplitCubeOnX(float hangover, float direction)
+
+    //Helper method to reduce code duplication for the X and Z axes
+    private void SplitCubeOnAxis(float hangover, float direction, bool isXAxis)
     {
         if (isStartCube || lockObjectMovement)
             return;
 
-        //Debug.Log(hangover);
-        if (hangover >= maxHangover || hangover <= minHangover)
+        float lastScale = isXAxis ? LastCube.transform.localScale.x : LastCube.transform.localScale.z;
+        float newSize = lastScale - MathF.Abs(hangover);
+        if (newSize <= MIN_SIZE_THRESHOLD)
         {
-            float newXSize = LastCube.transform.localScale.x - MathF.Abs(hangover);
-            if (newXSize <= 0.1f)
-            {
-                Debug.Log("GameOver");
-                ResetScene();
-                return;
-            }
-            float fallingBlockSize = transform.localScale.x - newXSize;
-
-            float newXPosition = LastCube.transform.position.x + (hangover / 2);
-            transform.localScale = new Vector3(newXSize, transform.localScale.y, transform.localScale.z);
-            transform.position = new Vector3(newXPosition, transform.position.y, transform.position.z);
-
-            float cubeEdge = transform.position.x + (newXSize / 2f * direction);
-            float fallingBlockXPosition = cubeEdge + fallingBlockSize / 2f * direction;
-
-            SpawnDropCube(fallingBlockXPosition, fallingBlockSize);
-        }
-        else
-        {
-            TouchDown(LastCube.transform.position);
-        }
-    }
-    private void SplitCubeOnZ(float hangover, float direction)
-    {
-        if (isStartCube || lockObjectMovement)
+            Debug.Log("Game Over");
+            ResetScene();
             return;
+        }
+        float currentScale = isXAxis ? transform.localScale.x : transform.localScale.z;
+        float fallingBlockSize = currentScale - newSize;
+        float lastPos = isXAxis ? LastCube.transform.position.x : LastCube.transform.position.z;
+        float newPos = lastPos + (hangover / 2);
 
-        Debug.Log(hangover);
-        if (hangover >= maxHangover || hangover <= minHangover)
+        Vector3 newScale = transform.localScale;
+        Vector3 newPosition = transform.position;
+        if (isXAxis)
         {
-            float newZSize = LastCube.transform.localScale.z - MathF.Abs(hangover);
-            if (newZSize <= 0.1f)
-            {
-                Debug.Log("GameOver");
-                ResetScene();
-                return;
-            }
-            float fallingBlockSize = transform.localScale.z - newZSize;
-
-            float newZPosition = LastCube.transform.position.z + (hangover / 2);
-            transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, newZSize);
-            transform.position = new Vector3(transform.position.x, transform.position.y, newZPosition);
-
-            float cubeEdge = transform.position.z + (newZSize / 2f * direction);
-            float fallingBlockZPosition = cubeEdge + fallingBlockSize / 2f * direction;
-
-            SpawnDropCube(fallingBlockZPosition, fallingBlockSize);
+            newScale.x = newSize;
+            newPosition.x = newPos;
         }
         else
         {
-            TouchDown(LastCube.transform.position);
+            newScale.z = newSize;
+            newPosition.z = newPos;
         }
+        transform.localScale = newScale;
+        transform.position = newPosition;
+
+        float cubeEdge = newPos + (newSize / 2f * direction);
+        float fallingBlockPos = cubeEdge + (fallingBlockSize / 2f * direction);
+        SpawnDropCube(fallingBlockPos, fallingBlockSize);
     }
+
+    //SplitCubeOnBack: Mathematical calculations clarified and explained with comments
     private void SplitCubeOnBack(float hangover, float direction)
     {
         if (isStartCube || lockObjectMovement)
             return;
 
-        Debug.Log(hangover);
-        // Eğer sapma (hangover) eşik değerlerin dışında ise küpü böl
-        if (hangover >= maxHangover || hangover <= minHangover)
+        Debug.Log("SplitCubeOnBack hangover: " + hangover);
+
+        float newZSize = LastCube.transform.localScale.z - MathF.Abs(hangover);
+        if (newZSize <= MIN_SIZE_THRESHOLD)
         {
-            // Yeni z boyutunu, son küpün ölçeğinden sapmanın mutlak değeri kadar azaltıyoruz.
-            float newZSize = LastCube.transform.localScale.z - MathF.Abs(hangover);
-            if (newZSize <= 0.1f)
-            {
-                Debug.Log("<GameOver>");
-                ResetScene();
-                return;
-            }
-            float fallingBlockSize = transform.localScale.z - newZSize;
-
-            float newZPosition;
-
-            if (hangover < 0)
-                newZPosition = LastCube.transform.position.z - (hangover / 2);
-            else
-                newZPosition = LastCube.transform.position.z + (hangover / 2);
-            transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, newZSize);
-            transform.position = new Vector3(transform.position.x, transform.position.y, newZPosition);
-
-            float directionChaneValue;
-            if (hangover < 0)
-                directionChaneValue = 1f;
-            else
-                directionChaneValue = -1f;
-            float cubeEdge = transform.position.z - (newZSize / 2f * direction * directionChaneValue);
-            float fallingBlockZPosition = cubeEdge - (fallingBlockSize / 2f * direction);
-
-            SpawnDropCube(fallingBlockZPosition, fallingBlockSize);
+            Debug.Log("Game Over");
+            ResetScene();
+            return;
         }
-        else
-        {
-            // Sapma çok küçükse direkt TouchDown işlemini gerçekleştir.
-            TouchDown(LastCube.transform.position);
-        }
+        float fallingBlockSize = transform.localScale.z - newZSize;
+
+        // For back direction, the new z position should be calculated by subtracting half the hangover
+        float newZPosition = LastCube.transform.position.z - (hangover / 2f);
+        Vector3 newPos = transform.position;
+        newPos.z = newZPosition;
+        transform.position = newPos;
+        transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, newZSize);
+
+        // Calculate the position of the falling block:
+        // For back direction, the kept block's back edge is:
+        float cubeEdge = transform.position.z - (newZSize / 2f);
+        // The falling block should be positioned further back by half of its own size
+        float fallingBlockZPosition = cubeEdge - (fallingBlockSize / 2f * direction);
+
+        SpawnDropCube(fallingBlockZPosition, fallingBlockSize);
     }
-    /*private void SplitCubeOnBack(float hangover, float direction)
-    {
-        Debug.Log(hangover);
-        if (hangover >= maxHangover || hangover <= minHangover)
-        {
-            float newZSize = LastCube.transform.localScale.z - MathF.Abs(hangover);
-            float fallingBlockSize = transform.localScale.z - newZSize;
 
-            float newZPosition = LastCube.transform.position.z - (hangover / 2);
-            transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, newZSize);
-            transform.position = new Vector3(transform.position.x, transform.position.y, newZPosition);
 
-            float cubeEdge = transform.position.z + (newZSize / 2f * direction);
-            float fallingBlockZPosition = cubeEdge + fallingBlockSize / 2f * direction;
-
-            SpawnDropCube(fallingBlockZPosition, fallingBlockSize);
-        }
-        else
-        {
-            TouchDown(LastCube.transform.position);
-        }
-    }*/
     private void TouchDown(Vector3 lastCubePos)
     {
         if (isStartCube || lockObjectMovement)
             return;
 
-        toucdownCounter = SoundManager.Instance.PlaySound();
+
+        touchdownCounter = SoundManager.Instance.PlaySound();
         GameManager.Instance.moveSpeed += 0.2f;
         Vector3 newPos;
         if (!LastCube.isStartCube)
         {
-            if (MoveDirection == MoveDirection.back && GameManager.Instance.isRunnerGame)
-                newPos = new Vector3(lastCubePos.x + LastCube.transform.localScale.x, lastCubePos.y, lastCubePos.z);
-            else if (MoveDirection == MoveDirection.Z && GameManager.Instance.isRunnerGame)
-                newPos = new Vector3(lastCubePos.x + LastCube.transform.localScale.x, lastCubePos.y, lastCubePos.z);
+            if ((MoveDirection == MoveDirection.back && GameManager.Instance.isRunnerGame) ||
+                (MoveDirection == MoveDirection.Z && GameManager.Instance.isRunnerGame))
+            {
+                if (LastCube.lockObjectMovement)
+                    newPos = new Vector3(lastCubePos.x + LastCube.transform.localScale.x, transform.position.y, lastCubePos.z);
+                else
+                    newPos = new Vector3(lastCubePos.x + LastCube.transform.localScale.x, lastCubePos.y, lastCubePos.z);
+            }
             else
+            {
                 newPos = new Vector3(lastCubePos.x, lastCubePos.y + LastCube.transform.localScale.y, lastCubePos.z);
+            }
         }
         else
         {
-            newPos = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+            newPos = transform.position;
         }
         transform.position = newPos;
 
-        if (toucdownCounter >= GameManager.Instance.scaleCount)
+        if (touchdownCounter >= GameManager.Instance.scaleCount)
         {
+            Debug.Log("albalbalb");
             StartCoroutine(ScaleCoroutine());
         }
         else
         {
             LastCube = this;
+            Debug.Log("blablabla");
             GameManager.Instance.SpawnCube();
+            GameManager.Instance.Score();
         }
+
     }
 
     IEnumerator ScaleCoroutine()
     {
         Vector3 initialScale = transform.localScale;
-
-        // Hedef ölçek: x ve z, başlangıç değerlerinin 1.2 katı,
-        // ancak 1'den büyük olamaz.
-        float targetX = Mathf.Min(initialScale.x * 1.2f, 1f);
-        float targetZ = Mathf.Min(initialScale.z * 1.2f, 1f);
+        float targetX = Mathf.Min(initialScale.x * SCALE_MULTIPLIER, 1f);
+        float targetZ = Mathf.Min(initialScale.z * SCALE_MULTIPLIER, 1f);
         Vector3 targetScale = new Vector3(targetX, initialScale.y, targetZ);
 
         float elapsed = 0f;
-
-        // Belirlenen süre boyunca ölçek geçişini gerçekleştir
         while (elapsed < scalingDuration)
         {
             elapsed += Time.deltaTime * 2f;
             float t = elapsed / scalingDuration;
-
-            // Lerp ile x ve z eksenlerinde yumuşak geçiş sağlanır
             float newX = Mathf.Lerp(initialScale.x, targetScale.x, t);
             float newZ = Mathf.Lerp(initialScale.z, targetScale.z, t);
             transform.localScale = new Vector3(newX, initialScale.y, newZ);
-
             yield return null;
         }
-
-        // Son durumda kesin hedef ölçeğe ulaşalım
         transform.localScale = targetScale;
-
         LastCube = this;
         GameManager.Instance.SpawnCube();
+        GameManager.Instance.Score();
     }
 
-    private void SpawnDropCube(float fallingBlockZPosition, float fallingBlockSize)
+    // Create the falling block (the cut part)
+    private void SpawnDropCube(float dropPos, float fallingBlockSize)
     {
         if (isStartCube || lockObjectMovement)
             return;
 
         GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        if (MoveDirection == MoveDirection.Z)
+        if (MoveDirection == MoveDirection.Z || MoveDirection == MoveDirection.back)
         {
             cube.transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, fallingBlockSize);
-            cube.transform.position = new Vector3(transform.position.x, transform.position.y, fallingBlockZPosition);
-        }
-        else if (MoveDirection == MoveDirection.back)
-        {
-            cube.transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, fallingBlockSize);
-            cube.transform.position = new Vector3(transform.position.x, transform.position.y, fallingBlockZPosition);
+            cube.transform.position = new Vector3(transform.position.x, transform.position.y, dropPos);
         }
         else
         {
             cube.transform.localScale = new Vector3(fallingBlockSize, transform.localScale.y, transform.localScale.z);
-            cube.transform.position = new Vector3(fallingBlockZPosition, transform.position.y, transform.position.z);
+            cube.transform.position = new Vector3(dropPos, transform.position.y, transform.position.z);
         }
         cube.AddComponent<Rigidbody>();
-        cube.GetComponent<Renderer>().material.color = GetComponent<Renderer>().material.color;
+        cube.GetComponent<BoxCollider>().isTrigger = true;
+        cube.GetComponent<Renderer>().material.color = cubeRenderer.material.color;
         SoundManager.Instance.ResetCounter();
         SoundManager.Instance.PlayCutSound();
         LastCube = this;
-        GameManager.Instance.moveSpeed = 1.5f;
+        GameManager.Instance.moveSpeed = DEFAULT_MOVE_SPEED;
         GameManager.Instance.SpawnCube();
         Destroy(cube, 4f);
     }

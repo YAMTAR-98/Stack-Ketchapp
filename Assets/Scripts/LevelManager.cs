@@ -3,11 +3,11 @@ using UnityEngine;
 [System.Serializable]
 public class LevelData
 {
-    [Header("Seviye Bilgileri")]
-    [Tooltip("Seviye uzunluğu")]
+    [Header("Level Information")]
+    [Tooltip("Level Lenght")]
     public int levelLength;
 
-    [Tooltip("Zorluk seviyesi (1-10 arası)")]
+    [Tooltip("Difficulty (1-10)")]
     [Range(1, 10)]
     public int difficulty;
 
@@ -18,7 +18,7 @@ public class LevelManager : MonoBehaviour
 
     public static LevelData CurrentLevel { get; private set; }
 
-    [Header("Level Verileri (5 seviye)")]
+    [Header("Difficulty (5 Level)")]
     public LevelData[] levels = new LevelData[5];
 
     public MovingCube finishLine;
@@ -27,12 +27,6 @@ public class LevelManager : MonoBehaviour
 
     private void Start()
     {
-
-        // Örnek olarak her seviyenin bilgilerini konsola yazdırabilirsiniz.
-        for (int i = 0; i < levels.Length; i++)
-        {
-            Debug.Log($"Level {i + 1}: Uzunluk = {levels[i].levelLength}, Zorluk = {levels[i].difficulty}");
-        }
         SetFinishLine();
     }
     internal void SetFinishLine()
@@ -40,7 +34,7 @@ public class LevelManager : MonoBehaviour
         if (!GameManager.Instance.isRunnerGame)
             return;
         CurrentLevel = levels[levelCount];
-        float offsetX = (MovingCube.LastCube.transform.localScale.x / 2) + (finishLine.transform.localScale.z / 2) + levels[levelCount].levelLength;
+        float offsetX = (MovingCube.LastCube.transform.localScale.x / 2) + finishLine.transform.localScale.z + levels[levelCount].levelLength;
         float offsetY = MovingCube.LastCube.transform.position.y + 0.5f;
         finishLine.transform.position = new Vector3(MovingCube.LastCube.transform.position.x + offsetX, offsetY, 0);
     }

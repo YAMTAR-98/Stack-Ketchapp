@@ -141,8 +141,8 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 0304769e0c8dd25459a3cf2f6b542a59, type: 2}
   - {fileID: 2100000, guid: d0ca2cd4145ff9c4282021e14702f4af, type: 2}
   scalingDuration: 0.5
-  minHangover: -0.015
-  maxHangover: 0.015
+  minHangover: -0.05
+  maxHangover: 0.05
   moveSpeed: 1
   isStartCube: 0
-  canMove: 1
+  lockObjectMovement: 0

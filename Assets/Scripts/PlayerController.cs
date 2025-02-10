@@ -1,31 +1,23 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
-    // Hedef platformun Transform'u. Inspector üzerinden veya SetTarget metodu ile atanabilir.
     public Transform targetPlatform;
     public LevelManager levelManager;
-
-    // Hareket ve dönme hızları
     public float moveSpeed = 2f;
     public float rotationSpeed = 10f;
-
-    // Hedefe ulaşma mesafe eşiği
     public float targetThreshold = 0.1f;
-
-    // Animator referansı
-    private Animator animator;
+    internal Animator animator;
 
     void Start()
     {
-        // Bu scriptin bağlı olduğu GameObject'deki Animator bileşenini alıyoruz.
         animator = GetComponent<Animator>();
     }
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("Succes");
         levelManager.OpenOrCloseStartUI(true);
         GameManager.Instance.FinisSession();
 
@@ -33,23 +25,29 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (transform.position.y < -10)
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
         if (targetPlatform != null)
         {
-            float distance = Vector3.Distance(transform.position, targetPlatform.position);
+
+            Vector3 currentPos = transform.position;
+            Vector3 targetPos = new Vector3(targetPlatform.position.x, currentPos.y, targetPlatform.position.z);
+            float distance = Vector3.Distance(currentPos, targetPos);
 
             if (distance > targetThreshold)
             {
                 if (animator != null)
                     animator.SetBool("Dance", false);
 
-                transform.position = Vector3.MoveTowards(transform.position, targetPlatform.position, moveSpeed * Time.deltaTime);
+                Vector3 localTarget = transform.InverseTransformPoint(targetPos);
 
-                Vector3 direction = targetPlatform.position - transform.position;
-                if (direction != Vector3.zero)
-                {
-                    Quaternion targetRotation = Quaternion.LookRotation(direction);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-                }
+                Vector3 localMove = Vector3.ClampMagnitude(localTarget, moveSpeed * Time.deltaTime);
+
+                Vector3 worldMove = transform.TransformDirection(localMove);
+
+                transform.position += worldMove;
             }
             else
             {
@@ -58,13 +56,14 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
-
     public void SetTarget(Transform newTarget)
     {
         targetPlatform = newTarget;
 
-        // Yeni hedefe geçişte dansı kapat.
-        if (animator != null)
-            animator.SetBool("Dance", false);
+        if (animator != null && newTarget != null)
+            animator.SetBool("Run", true);
     }
 }
+
+
+
