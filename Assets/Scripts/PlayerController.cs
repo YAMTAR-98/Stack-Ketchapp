@@ -12,6 +12,8 @@ public class PlayerController : MonoBehaviour
     public float targetThreshold = 0.1f;
     internal Animator animator;
 
+    bool canDance;
+
     void Start()
     {
         animator = GetComponent<Animator>();
@@ -19,6 +21,7 @@ public class PlayerController : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         levelManager.OpenOrCloseStartUI(true);
+        canDance = true;
         GameManager.Instance.FinisSession();
 
     }
@@ -38,7 +41,7 @@ public class PlayerController : MonoBehaviour
 
             if (distance > targetThreshold)
             {
-                if (animator != null)
+                if (animator != null && !canDance)
                     animator.SetBool("Dance", false);
 
                 Vector3 localTarget = transform.InverseTransformPoint(targetPos);
@@ -52,13 +55,17 @@ public class PlayerController : MonoBehaviour
             else
             {
                 if (animator != null)
-                    animator.SetBool("Dance", true);
+                    animator.SetBool("Run", false);
             }
         }
+        if (canDance)
+            animator.SetBool("Dance", true);
+
     }
     public void SetTarget(Transform newTarget)
     {
         targetPlatform = newTarget;
+        canDance = false;
 
         if (animator != null && newTarget != null)
             animator.SetBool("Run", true);

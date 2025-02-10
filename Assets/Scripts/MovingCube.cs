@@ -42,7 +42,7 @@ public class MovingCube : MonoBehaviour
             moveSpeed = GameManager.Instance.moveSpeed;
 
         if (!isStartCube && !lockObjectMovement)
-            cubeRenderer.material.color = GetRandomColor();
+            cubeRenderer.material = GetRandomColor();
 
         if (LastCube != null && !isStartCube && !lockObjectMovement)
         {
@@ -52,9 +52,9 @@ public class MovingCube : MonoBehaviour
         }
     }
 
-    private Color GetRandomColor()
+    private Material GetRandomColor()
     {
-        return new Color(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
+        return materials[UnityEngine.Random.Range(0, materials.Count - 1)];
     }
 
     void Update()

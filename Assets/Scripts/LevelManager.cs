@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 [System.Serializable]
@@ -23,6 +24,7 @@ public class LevelManager : MonoBehaviour
 
     public MovingCube finishLine;
     public GameObject StartUI;
+    public TMP_Text levelText;
     public int levelCount = 0;
 
     private void Start()
@@ -34,6 +36,8 @@ public class LevelManager : MonoBehaviour
         if (!GameManager.Instance.isRunnerGame)
             return;
         CurrentLevel = levels[levelCount];
+        levelText.text = "Level:  " + (levelCount + 1).ToString();
+
         float offsetX = (MovingCube.LastCube.transform.localScale.x / 2) + finishLine.transform.localScale.z + levels[levelCount].levelLength;
         float offsetY = MovingCube.LastCube.transform.position.y + 0.5f;
         finishLine.transform.position = new Vector3(MovingCube.LastCube.transform.position.x + offsetX, offsetY, 0);
