@@ -37,6 +37,8 @@ public class LevelManager : MonoBehaviour
     }
     internal void SetFinishLine()
     {
+        if (!GameManager.Instance.isRunnerGame)
+            return;
         CurrentLevel = levels[levelCount];
         float offsetX = (MovingCube.LastCube.transform.localScale.x / 2) + (finishLine.transform.localScale.z / 2) + levels[levelCount].levelLength;
         float offsetY = MovingCube.LastCube.transform.position.y + 0.5f;

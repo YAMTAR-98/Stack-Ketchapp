@@ -40,18 +40,29 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         if (isRunnerGame)
+        {
             playerController = FindAnyObjectByType<PlayerController>();
+            levelManager.finishLine.gameObject.SetActive(true);
+        }
+
 
         cameraFollowPosition = virtualCamera.transform.position;
-        levelManager.finishLine.gameObject.SetActive(true);
+
     }
     public void StartGame()
     {
+
+
         isGameStarted = true;
         levelManager.OpenOrCloseStartUI(false);
-        virtualCamera.transform.position = cameraFollowPosition;
-        levelManager.SetFinishLine();
-        playerController.SetTarget(null);
+
+
+        if (isRunnerGame)
+        {
+            virtualCamera.transform.position = cameraFollowPosition;
+            playerController.SetTarget(null);
+            levelManager.SetFinishLine();
+        }
         SpawnCube();
     }
     public bool IsGameStarted()
@@ -69,7 +80,7 @@ public class GameManager : MonoBehaviour
                 {
                     virtualCamera.Follow = MovingCube.CurrentCube.transform;
                     virtualCamera.LookAt = MovingCube.CurrentCube.transform;
-                    playerController.SetTarget(MovingCube.CurrentCube.transform);
+                    //playerController.SetTarget(MovingCube.CurrentCube.transform);
                     MovingCube.CurrentCube.Stop();
                 }
                 else
@@ -107,21 +118,29 @@ public class GameManager : MonoBehaviour
         spawnerIndex = spawnerIndex == 0 ? 1 : 0;
         currentSpawner = cubeSpawners[spawnerIndex];
 
-
-        if (spawnCount < LevelManager.CurrentLevel.levelLength - 1 && isRunnerGame)
+        if (isRunnerGame)
+        {
+            if (spawnCount < LevelManager.CurrentLevel.levelLength - 1 && isRunnerGame)
+                currentSpawner.SpawnCube();
+        }
+        else
             currentSpawner.SpawnCube();
+
+
 
     }
     internal void Score()
     {
-
         score++;
         spawnCount++;
         scoreText.text = score.ToString();
-        if (spawnCount == LevelManager.CurrentLevel.levelLength && isRunnerGame)
+
+        if (isRunnerGame && spawnCount == LevelManager.CurrentLevel.levelLength)
         {
             isGameStarted = false;
             playerController.SetTarget(levelManager.finishLine.transform);
         }
     }
 }
+
+
