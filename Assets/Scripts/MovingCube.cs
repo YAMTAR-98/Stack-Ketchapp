@@ -109,10 +109,14 @@ public class MovingCube : MonoBehaviour
             Debug.Log("asasasasas");
             Rigidbody rb = CurrentCube.gameObject.AddComponent<Rigidbody>();
             rb.useGravity = true;
-            GameManager.Instance.playerController.SetTarget(GameManager.Instance.levelManager.finishLine.transform);
+            if (GameManager.Instance.isRunnerGame)
+
+                GameManager.Instance.playerController.SetTarget(GameManager.Instance.levelManager.finishLine.transform);
+            else
+                StartCoroutine(ResetCoroutine());
             LastCube = null;
             CurrentCube = null;
-            //ResetScene();
+
             return;
         }
 
@@ -144,6 +148,11 @@ public class MovingCube : MonoBehaviour
 
         if (!isStartCube)
             LastCube = this;
+    }
+    IEnumerator ResetCoroutine()
+    {
+        yield return new WaitForSeconds(3);
+        ResetScene();
     }
 
     void ResetScene()
@@ -240,7 +249,7 @@ public class MovingCube : MonoBehaviour
 
         // Calculate the position of the falling block:
         // For back direction, the kept block's back edge is:
-        float cubeEdge = transform.position.z - (newZSize / 2f);
+        float cubeEdge = transform.position.z + (newZSize / 2f);
         // The falling block should be positioned further back by half of its own size
         float fallingBlockZPosition = cubeEdge - (fallingBlockSize / 2f * direction);
 
@@ -339,7 +348,7 @@ public class MovingCube : MonoBehaviour
         SoundManager.Instance.ResetCounter();
         SoundManager.Instance.PlayCutSound();
         LastCube = this;
-        GameManager.Instance.moveSpeed = DEFAULT_MOVE_SPEED;
+        GameManager.Instance.ResetMoveSpeed();
         GameManager.Instance.SpawnCube();
         Destroy(cube, 4f);
     }

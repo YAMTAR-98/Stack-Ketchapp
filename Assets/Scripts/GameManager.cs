@@ -156,6 +156,7 @@ public class GameManager : MonoBehaviour
     public IGameMode gameMode;
     public float rotationSpeed;
     internal Renderer baseCubeRenderer;
+    internal float DEFAULT_MOVE_SPEED;
 
     private void Awake()
     {
@@ -170,6 +171,7 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        DEFAULT_MOVE_SPEED = moveSpeed;
         //cameraFollowRotation = virtualCamera.transform.rotation;
 
         // Oyun moduna göre uygun mod sınıfını seçiyoruz.
@@ -195,6 +197,10 @@ public class GameManager : MonoBehaviour
     public bool IsGameStarted()
     {
         return isGameStarted;
+    }
+    public void ResetMoveSpeed()
+    {
+        moveSpeed = DEFAULT_MOVE_SPEED;
     }
 
     void Update()

@@ -44,7 +44,8 @@ public class LevelManager : MonoBehaviour
         float offsetX = (MovingCube.LastCube.transform.localScale.x / 2) + finishLine.transform.localScale.z + levels[levelCount].levelLength;
         float offsetY = MovingCube.LastCube.transform.position.y + 0.5f;
         finishLine.transform.position = new Vector3(MovingCube.LastCube.transform.position.x + offsetX, offsetY, 0);
-        SetDifficulty();
+        if (GameManager.Instance.isRunnerGame)
+            SetDifficulty();
     }
     internal void SetDifficulty()
     {
