@@ -1389,15 +1389,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   levels:
   - levelLength: 5
-    difficulty: 0
+    difficulty: 1
   - levelLength: 10
-    difficulty: 0
-  - levelLength: 15
-    difficulty: 0
-  - levelLength: 20
     difficulty: 2
-  - levelLength: 25
+  - levelLength: 15
     difficulty: 3
+  - levelLength: 20
+    difficulty: 4
+  - levelLength: 25
+    difficulty: 4
+  - levelLength: 5
+    difficulty: 10
+  - levelLength: 35
+    difficulty: 1
   finishLine: {fileID: 1105514806}
   StartUI: {fileID: 741688393}
   levelText: {fileID: 207518225}

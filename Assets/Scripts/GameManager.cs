@@ -25,6 +25,8 @@ public class RunnerGameMode : IGameMode
 
     public void StartGame()
     {
+        gameManager.moveSpeed += gameManager.levelManager.extraSpeed;
+
         gameManager.isGameStarted = true;
         gameManager.levelManager.OpenOrCloseStartUI(false);
 
@@ -163,6 +165,7 @@ public class GameManager : MonoBehaviour
             return;
         }
         Instance = this;
+
     }
 
     private void Start()

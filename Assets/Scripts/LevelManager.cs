@@ -26,6 +26,9 @@ public class LevelManager : MonoBehaviour
     public GameObject StartUI;
     public TMP_Text levelText;
     public int levelCount = 0;
+    internal float extraSpeed;
+
+    private const int DIFFICULTY_DIVIDER = 5;
 
     private void Start()
     {
@@ -41,6 +44,13 @@ public class LevelManager : MonoBehaviour
         float offsetX = (MovingCube.LastCube.transform.localScale.x / 2) + finishLine.transform.localScale.z + levels[levelCount].levelLength;
         float offsetY = MovingCube.LastCube.transform.position.y + 0.5f;
         finishLine.transform.position = new Vector3(MovingCube.LastCube.transform.position.x + offsetX, offsetY, 0);
+        SetDifficulty();
+    }
+    internal void SetDifficulty()
+    {
+        if (!GameManager.Instance.isRunnerGame)
+            return;
+        extraSpeed = levels[levelCount].difficulty / DIFFICULTY_DIVIDER;
     }
     internal void OpenOrCloseStartUI(bool canOpen)
     {

@@ -17,9 +17,9 @@ public class MovingCube : MonoBehaviour
     [SerializeField] private float moveSpeed = 1f;
     [SerializeField] internal bool isStartCube;
     [SerializeField] internal bool lockObjectMovement;
+    private float DEFAULT_MOVE_SPEED = 1.5f;
 
     private const float MIN_SIZE_THRESHOLD = 0.01f;
-    private const float DEFAULT_MOVE_SPEED = 1.5f;
     private const float SCALE_MULTIPLIER = 1.2f;
     private int touchdownCounter;
     private Renderer cubeRenderer;
@@ -40,6 +40,7 @@ public class MovingCube : MonoBehaviour
 
         if (GameManager.Instance != null)
             moveSpeed = GameManager.Instance.moveSpeed;
+        DEFAULT_MOVE_SPEED = moveSpeed;
 
         if (!isStartCube && !lockObjectMovement)
             cubeRenderer.material = GetRandomColor();
