@@ -9,7 +9,7 @@ public class SceneLoadManager : MonoBehaviour
         SceneManager.LoadScene(sceneName);
     }
     [ContextMenu("LoadMainMenu Start Scene")]
-    void LoadMainMenu()
+    public void LoadMainMenu()
     {
         LoadScene("StartScene");
         Debug.Log("StartScene Loaded");

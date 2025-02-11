@@ -944,6 +944,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: StartUI
       objectReference: {fileID: 0}
+    - target: {fileID: 1438394435448779126, guid: 61766353f25132a41b6bf23a62b7475c, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 2048145517}
     - target: {fileID: 1999059749163122307, guid: 61766353f25132a41b6bf23a62b7475c, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -1024,9 +1028,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6176924181549201858, guid: 61766353f25132a41b6bf23a62b7475c, type: 3}
-      propertyPath: m_UiScaleMode
-      value: 1
+    - target: {fileID: 9202574955546130125, guid: 61766353f25132a41b6bf23a62b7475c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -622
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1035,7 +1039,7 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: 61766353f25132a41b6bf23a62b7475c, type: 3}
 --- !u!1 &1423924061 stripped
 GameObject:
-  m_CorrespondingSourceObject: {fileID: 959086002879717301, guid: 61766353f25132a41b6bf23a62b7475c, type: 3}
+  m_CorrespondingSourceObject: {fileID: 6866499628778261386, guid: 61766353f25132a41b6bf23a62b7475c, type: 3}
   m_PrefabInstance: {fileID: 1423924060}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1547354765
