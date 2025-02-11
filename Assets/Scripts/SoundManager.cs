@@ -26,7 +26,6 @@ public class SoundManager : MonoBehaviour
 
     public int PlaySound()
     {
-        //Debug.Log(index);
         index++;
         if (index > audioClips.Count)
         {

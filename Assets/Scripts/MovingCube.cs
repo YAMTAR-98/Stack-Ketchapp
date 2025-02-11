@@ -48,7 +48,6 @@ public class MovingCube : MonoBehaviour
         if (LastCube != null && !isStartCube && !lockObjectMovement)
         {
             // Adjust to match the last cube's x and z scale
-            Debug.Log(gameObject.name);
             transform.localScale = new Vector3(LastCube.transform.localScale.x, transform.localScale.y, LastCube.transform.localScale.z);
         }
     }
@@ -90,7 +89,6 @@ public class MovingCube : MonoBehaviour
 
         moveSpeed = 0;
         float hangover = GetHangover();
-        Debug.Log(hangover);
         if (LastCube == null)
         {
             Debug.LogError("LastCube is null!");
@@ -106,7 +104,6 @@ public class MovingCube : MonoBehaviour
         // If the offset (hangover) is larger than the last cube's size (extremely misaligned placement)
         if (MathF.Abs(hangover) >= maxSize)
         {
-            Debug.Log("asasasasas");
             Rigidbody rb = CurrentCube.gameObject.AddComponent<Rigidbody>();
             rb.useGravity = true;
             if (GameManager.Instance.isRunnerGame)
@@ -229,7 +226,6 @@ public class MovingCube : MonoBehaviour
         if (isStartCube || lockObjectMovement)
             return;
 
-        Debug.Log("SplitCubeOnBack hangover: " + hangover);
 
         float newZSize = LastCube.transform.localScale.z - MathF.Abs(hangover);
         if (newZSize <= MIN_SIZE_THRESHOLD)
@@ -289,13 +285,11 @@ public class MovingCube : MonoBehaviour
 
         if (touchdownCounter >= GameManager.Instance.scaleCount)
         {
-            Debug.Log("albalbalb");
             StartCoroutine(ScaleCoroutine());
         }
         else
         {
             LastCube = this;
-            Debug.Log("blablabla");
             GameManager.Instance.SpawnCube();
             GameManager.Instance.Score();
         }

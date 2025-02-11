@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Cinemachine;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 // Oyun modlarının ortak davranışlarını tanımlayan arayüz
 public interface IGameMode
@@ -57,7 +58,6 @@ public class RunnerGameMode : IGameMode
         // Level verisine bağlı olarak spawn sayısı kontrol ediliyor.
         if (gameManager.spawnCount < LevelManager.CurrentLevel.levelLength - 1)
         {
-            Debug.Log("InSpawnCube");
             gameManager.spawnerIndex = gameManager.spawnerIndex == 0 ? 1 : 0;
             gameManager.currentSpawner = gameManager.cubeSpawners[gameManager.spawnerIndex];
             gameManager.currentSpawner.SpawnCube();
@@ -217,10 +217,6 @@ public class GameManager : MonoBehaviour
                 StartGame();
             }
         }
-        if (canCameraRotate)
-        {
-            RotateCamera();
-        }
 
     }
 
@@ -241,11 +237,6 @@ public class GameManager : MonoBehaviour
         playerController.animator.SetBool("Dance", true);
         score = 0;
         spawnCount = 0;
-        Debug.Log(MovingCube.LastCube.name);
-    }
-    public void RotateCamera()
-    {
-        //virtualCamera.transform.Rotate(47, rotationSpeed * Time.deltaTime, 0);
     }
 
     public void SpawnCube()
