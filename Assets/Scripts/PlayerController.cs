@@ -7,6 +7,7 @@ public class PlayerController : MonoBehaviour
 {
     public Transform targetPlatform;
     public LevelManager levelManager;
+    public ScoreManager scoreManager;
     public float moveSpeed = 2f;
     public float rotationSpeed = 10f;
     public float targetThreshold = 0.1f;
@@ -30,6 +31,7 @@ public class PlayerController : MonoBehaviour
     {
         if (transform.position.y < -10)
         {
+            scoreManager.CalculateTotalScore(levelManager.GetCurrentLevel());
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
         if (targetPlatform != null)

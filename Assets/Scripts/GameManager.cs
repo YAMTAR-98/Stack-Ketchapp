@@ -33,7 +33,7 @@ public class RunnerGameMode : IGameMode
 
         gameManager.cameraManager.rotateLeftTrigger = false;
         gameManager.playerController.animator.SetBool("Dance", false);
-        gameManager.scoreText.text = gameManager.score.ToString();
+        gameManager.scoreManager.ShowScore();
         //gameManager.virtualCamera.transform.rotation = gameManager.cameraFollowRotation;
 
         gameManager.playerController.SetTarget(null);
@@ -66,12 +66,11 @@ public class RunnerGameMode : IGameMode
 
     public void Score()
     {
-        gameManager.score++;
         gameManager.spawnCount++;
-        gameManager.scoreText.text = gameManager.score.ToString();
+        gameManager.scoreManager.Score();
 
         // Belirlenen level uzunluğuna ulaşıldıysa, finish line'a yönlendir.
-        if (gameManager.score == LevelManager.CurrentLevel.levelLength)
+        if (gameManager.scoreManager.score == LevelManager.CurrentLevel.levelLength)
         {
             gameManager.isGameStarted = false;
             gameManager.playerController.SetTarget(gameManager.levelManager.finishLine.transform);
@@ -115,9 +114,8 @@ public class StackingGameMode : IGameMode
 
     public void Score()
     {
-        gameManager.score++;
         gameManager.spawnCount++;
-        gameManager.scoreText.text = gameManager.score.ToString();
+        gameManager.scoreManager.Score();
     }
 }
 
@@ -131,12 +129,12 @@ public class GameManager : MonoBehaviour
     [Header("Virtual Camera For Only Building Game")]
     [Tooltip("For Only Building Game")]
     public CinemachineVirtualCamera virtualCamera;
+    public ScoreManager scoreManager;
     [HideInInspector]
     public Quaternion cameraFollowRotation;
 
     public MovingCube baseCube;
-    public TMP_Text scoreText;
-    internal int score = 0;
+
     internal int spawnCount = 0;
 
     public CubeSpawner[] cubeSpawners;
@@ -157,6 +155,8 @@ public class GameManager : MonoBehaviour
     public float rotationSpeed;
     internal Renderer baseCubeRenderer;
     internal float DEFAULT_MOVE_SPEED;
+
+
 
     private void Awake()
     {
@@ -190,8 +190,10 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
+        scoreManager.ToggleLevelAndScoreTexts(true);
         // Seçilen mod üzerinden oyunu başlatıyoruz.
         gameMode.StartGame();
+
     }
 
     public bool IsGameStarted()
@@ -222,6 +224,8 @@ public class GameManager : MonoBehaviour
 
     internal void FinisSession()
     {
+        TotalScore();
+
         levelManager.finishLine.enabled = true;
         baseCube.transform.position = new Vector3(
             levelManager.finishLine.transform.position.x,
@@ -235,8 +239,13 @@ public class GameManager : MonoBehaviour
         levelManager.levelCount++;
         cameraManager.rotateLeftTrigger = true;
         playerController.animator.SetBool("Dance", true);
-        score = 0;
+
+        scoreManager.score = 0;
         spawnCount = 0;
+    }
+    private void TotalScore()
+    {
+        scoreManager.CalculateTotalScore(levelManager.GetCurrentLevel());
     }
 
     public void SpawnCube()

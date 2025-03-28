@@ -29,7 +29,10 @@ public class LevelManager : MonoBehaviour
     public int levelCount = 0;
     internal float extraSpeed;
 
+    private int m_currentLevel;
+
     private const int DIFFICULTY_DIVIDER = 5;
+
 
     private void Start()
     {
@@ -37,10 +40,12 @@ public class LevelManager : MonoBehaviour
     }
     internal void SetFinishLine()
     {
+
         if (!GameManager.Instance.isRunnerGame)
             return;
         CurrentLevel = levels[levelCount];
-        levelText.text = "Level:  " + (levelCount + 1).ToString();
+        m_currentLevel = levelCount + 1;
+        levelText.text = "Level:  " + m_currentLevel.ToString();
 
         float offsetX = (MovingCube.LastCube.transform.localScale.x / 2) + finishLine.transform.localScale.z + levels[levelCount].levelLength;
         float offsetY = MovingCube.LastCube.transform.position.y + 0.5f;
@@ -57,5 +62,9 @@ public class LevelManager : MonoBehaviour
     internal void OpenOrCloseStartUI(bool canOpen)
     {
         StartUI.SetActive(canOpen);
+    }
+    internal int GetCurrentLevel()
+    {
+        return m_currentLevel;
     }
 }
